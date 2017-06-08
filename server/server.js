@@ -1,11 +1,11 @@
 const express = require('express');
-const pg = require('pg-promise')({});
+const pgp = require('pg-promise')({});
 const cors = require('cors');
 const app = express();
 
 const PORT = 3000;
 
-const db = pg({
+const db = pgp({
   host: 'localhost',
   port: 5432,
   database: 'express3',
@@ -13,18 +13,23 @@ const db = pg({
   password: 'password'
 });
 
-app.use(express.static(__dirname + '/react-app/build'));
+// Use CORS to handle fetch requests from unbuilt react app running on webpack dev server:
+process.env.NODE_ENV === 'Development' && app.use(cors({
+  origin: 'http://localhost:3004'
+}));
+
+app.use(express.static(__dirname + '/public/build'));
 
 app.get('/', (req, res) => {
   res.send('Hello world!');
 })
 
-app.get('/somedata', cors(), (req, res) => {
+app.get('/somedata', (req, res) => {
   db.query("SELECT * FROM data")
-    .then(function(data) {
+    .then(data => {
       res.json(data);
     })
-    .catch(function(error) {
+    .catch(error => {
       console.log("ERROR GETTING DATA: ", error);
       res.status(500).end();
     });
